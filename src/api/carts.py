@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from src.api import auth
+import sqlalchemy
+from src import database as db
+
 
 router = APIRouter(
     prefix="/carts",
@@ -12,26 +15,29 @@ router = APIRouter(
 class NewCart(BaseModel):
     customer: str
 
-
 @router.post("/")
 def create_cart(new_cart: NewCart):
+    #new cart = new customer
     """ """
     return {"cart_id": 1}
 
 
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
+    #identify a customer by their id
     """ """
 
     return {}
 
 
 class CartItem(BaseModel):
+    #a potion
     quantity: int
 
 
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
+    #customer, what they're buying and the quantity
     """ """
 
     return "OK"
