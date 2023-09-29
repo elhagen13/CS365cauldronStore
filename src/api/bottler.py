@@ -41,7 +41,7 @@ def get_bottle_plan():
         SELECT num_red_ml FROM global_inventory
     """
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.txt(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
         first_row = result.first()
         #how many red potions can be made
         print(quant)
