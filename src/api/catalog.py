@@ -17,13 +17,14 @@ def get_catalog():
         result = connection.execute(sqlalchemy.txt(sql_to_execute))
         first_row = result.first()
         quant = first_row.num_red_potions
+        print(quant)
 
     # Can return a max of 20 items.
     return [
             {
                 "sku": "RED_POTION_0",
                 "name": "red potion",
-                "quantity": quant,
+                "quantity": 1,
                 "price": 50,
                 "potion_type": [100, 0, 0, 0],
             }
