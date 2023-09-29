@@ -22,15 +22,14 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     #update, +bottles, -ml
     sql_to_execute = """ 
         UPDATE global_inventory 
-        SET num_red_potions = num_red_potions + :quant,
-            num_red_ml = num_red_ml - (100 * :quant)
+        SET num_red_potions = num_red_potions + potions_delivered[0].quant,
+            num_red_ml = num_red_ml - (100 * potions_delivered[0].quant)
         """ 
-    parameters = {'quant' : potions_delivered[0].quantity}
 
     print(potions_delivered)
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(sql_to_execute, **parameters))
+        connection.execute(sqlalchemy.text(sql_to_execute))
 
     return "OK"
 
