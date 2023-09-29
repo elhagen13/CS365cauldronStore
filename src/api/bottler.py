@@ -22,7 +22,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     #update, +bottles, -ml
     sql_to_execute = """ 
         UPDATE global_inventory 
-        SET num_red_potions = num_red_potions + :quant
+        SET num_red_potions = num_red_potions + :quant,
+            num_red_ml = num_red_ml - (100 * :quant)
         """ 
     parameters = {'quant' : potions_delivered[0].quantity}
 
@@ -39,19 +40,12 @@ def get_bottle_plan():
     sql_to_execute = """
         SELECT num_red_ml FROM global_inventory
     """
-    remove_ml = """
-        UPDATE global_inventory
-        SET num_red_ml = num_red_ml - (100 * :quant)
-    """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.txt(sql_to_execute))
         first_row = result.first()
-
         #how many red potions can be made
+        print(quant)
         quant = first_row.num_red_ml // 100
-        parameters = {'quant' : quant}
-        connection.execute(sqlalchemy.txt(remove_ml), **parameters)
-
 
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.

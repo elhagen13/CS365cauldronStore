@@ -28,9 +28,9 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     total_expenses = 0
     total_ml = 0
 
-    for barrels in barrels_delivered:
-        total_expenses += (barrels.price * barrels.quantity)  
-        total_ml += (barrels.ml_per_barrel * barrels.quantity)
+    for barrel in barrels_delivered:
+        total_expenses += (barrel.price * barrel.quantity)  
+        total_ml += (barrel.ml_per_barrel * barrel.quantity)
 
     with db.engine.begin() as connection:
         sql_to_execute = """ 
