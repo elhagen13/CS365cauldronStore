@@ -20,10 +20,11 @@ class PotionInventory(BaseModel):
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     #the result of going barrel to bottle
     #update, +bottles, -ml
-    sql_to_execute = """ 
+    quant = potions_delivered[0].quantity
+    sql_to_execute = f""" 
         UPDATE global_inventory 
-        SET num_red_potions = num_red_potions + potions_delivered[0].quant,
-            num_red_ml = num_red_ml - (100 * potions_delivered[0].quant)
+        SET num_red_potions = num_red_potions + {quant},
+            num_red_ml = num_red_ml - (100 * {quant})
         """ 
 
     print(potions_delivered)
