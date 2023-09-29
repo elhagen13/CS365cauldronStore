@@ -32,7 +32,9 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text(sql_to_execute))
-        result = connection.execute(sqlalchemy.text(trial))
+    
+    with db.engine.begin() as connection2:
+        result = connection2.execute(sqlalchemy.text(trial))
         first_row = result.first()
         print(first_row.num_red_potions)
         print(first_row.num_red_ml)
