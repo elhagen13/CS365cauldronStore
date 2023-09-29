@@ -27,10 +27,15 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             num_red_ml = num_red_ml - (100 * {quant})
         """ 
 
+    trial = """ SELECT num_red_potions, num_red_ml FROM global_inventory"""
     print(potions_delivered)
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(trial))
+        first_row = result.first()
+        print(first_row.num_red_potions)
+        print(first_row.num_red_ml)
 
     return "OK"
 
