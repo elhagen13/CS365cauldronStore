@@ -22,9 +22,9 @@ def create_cart(new_cart: NewCart):
     #new cart = new customer
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("INSERT INTO customer DEFAULT VALUES"))
-        result = connection.execute(sqlalchemy.text("SELECT id FROM customer"))
+        result = connection.execute(sqlalchemy.text("SELECT LAST_INSERT_ID() FROM customer"))
         first_row = result.first()
-        
+
     return {"cart_id": first_row.id}
 
 
