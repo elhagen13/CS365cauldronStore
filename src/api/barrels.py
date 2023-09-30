@@ -58,7 +58,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         result = connection.execute(sqlalchemy.text(sql_to_execute))
         first_row = result.first()
         #if your inventory is less than 10 buy a barrel
-        print(first_row.num_red_potions)
         if(first_row.num_red_potions < 10) and first_row.gold > wholesale_catalog[0].price:
             return [
                 {
