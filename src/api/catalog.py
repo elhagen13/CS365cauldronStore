@@ -17,7 +17,8 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text(sql_to_execute))
         first_row = result.first()
     # Can return a max of 20 items.
-
+    if(first_row.num_red_potions == 0):
+        return []
     return [
             {
                 "sku": "RED_POTION_0",

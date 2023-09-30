@@ -21,8 +21,7 @@ class NewCart(BaseModel):
 def create_cart(new_cart: NewCart):
     #new cart = new customer
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("INSERT INTO customer DEFAULT VALUES"))
-        id = connection.execute(sqlalchemy.text("SELECT LAST_INSERT_ID()"))
+        id = connection.execute(sqlalchemy.text("INSERT INTO customer DEFAULT VALUES RETURNING id"))
         print(id)
 
     return {"cart_id": id}
