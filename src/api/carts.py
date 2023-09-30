@@ -22,10 +22,12 @@ def create_cart(new_cart: NewCart):
     #new cart = new customer
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text("INSERT INTO customer DEFAULT VALUES"))
-        result = connection.execute(sqlalchemy.text("SELECT LAST_INSERT_ID() FROM customer"))
-        first_row = result.first()
+        result = connection.execute(sqlalchemy.text("SELECT id FROM customer WHERE id = LAST_INSERT_ID()"))
+        customer = result.first()
 
-    return {"cart_id": first_row.id}
+        print(customer.id)
+
+    return {"cart_id": customer.id}
 
 
 @router.get("/{cart_id}")
