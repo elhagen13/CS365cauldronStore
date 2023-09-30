@@ -33,15 +33,13 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         total_ml += (barrel.ml_per_barrel * barrel.quantity)
 
     with db.engine.begin() as connection:
-        sql_to_execute = """ 
+        sql_to_execute = f""" 
         UPDATE global_inventory 
-        SET gold = gold - :total_expenses,
-            num_red_ml = num_red_ml + :total_ml
+        SET gold = gold - {total_expenses},
+            num_red_ml = num_red_ml + {total_ml}
          """
-        
-        parameters = {'total_expenses': total_expenses, 'total_ml': total_ml}
 
-        connection.execute(sqlalchemy.text(sql_to_execute, **parameters))
+        connection.execute(sqlalchemy.text(sql_to_execute))
 
     return "OK"
 
