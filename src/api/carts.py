@@ -5,6 +5,8 @@ import sqlalchemy
 from src import database as db
 
 
+cur_id = 1
+
 router = APIRouter(
     prefix="/carts",
     tags=["cart"],
@@ -18,8 +20,13 @@ class NewCart(BaseModel):
 @router.post("/")
 def create_cart(new_cart: NewCart):
     #new cart = new customer
-    """ """
-    return {"cart_id": 1}
+    with db.engine.begin() as connection:
+        sql_to_execute = """INSERT INTO customer DEFAULT VALUES,
+                        SELECT id FROM customer"""
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        first_row = result.first()
+
+    return {"cart_id": first_row.id}
 
 
 @router.get("/{cart_id}")
