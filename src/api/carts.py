@@ -32,7 +32,7 @@ def create_cart(new_cart: NewCart):
 def get_cart(cart_id: int):
     #identify a customer by their id
     with db.engine.begin() as connection:
-        sql_to_execute = """SELECT customer_name FROM customer"""
+        sql_to_execute = f"""SELECT customer_name FROM customer WHERE id = {cart_id}"""
         result = connection.execute(sqlalchemy.text(sql_to_execute))
         first_row = result.first()
 
