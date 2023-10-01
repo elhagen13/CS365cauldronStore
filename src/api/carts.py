@@ -20,8 +20,12 @@ class NewCart(BaseModel):
 @router.post("/")
 def create_cart(new_cart: NewCart):
    #new cart = new customer
-  
-   return {"cart_id": 1}
+    with db.engine.begin() as connection:
+        sql_to_execute = f"""INSERT INTO customer (customer_name) VALUES ({new_cart.customer}) RETURNING id """
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+   
+    print(type(result))
+    return {"cart_id": 1}
 
 
 
