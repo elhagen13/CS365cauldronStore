@@ -22,18 +22,21 @@ def create_cart(new_cart: NewCart):
     with db.engine.begin() as connection:
         sql_to_execute = f"""INSERT INTO customer (customer_name) VALUES ('{new_cart.customer}') RETURNING id """
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-   
-    print(type(result))
-    return {"cart_id": 1}
+        first_row = result.first()
+
+    return {"cart_id": first_row.id}
 
 
 
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
     #identify a customer by their id
-    """ """
+    with db.engine.begin() as connection:
+        sql_to_execute = """SELECT customer_name FROM customer"""
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        first_row = result.first()
 
-    return {}
+    return {first_row.customer_name}
 
 
 class CartItem(BaseModel):
