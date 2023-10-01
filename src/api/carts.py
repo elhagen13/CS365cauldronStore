@@ -46,9 +46,9 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
    #customer, what they're buying and the quantity
    with db.engine.begin() as connection:
        sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity} WHERE id = {cart_id},
-       SET total = ({red_potion_price} * {cart_item.quantity})"""
+       SET total += ({red_potion_price} * {cart_item.quantity})"""
        connection.execute(sqlalchemy.text(sql_to_execute))
-       print(cart_item.quantity)
+
    return "OK"
 
 class CartCheckout(BaseModel):
@@ -56,8 +56,24 @@ class CartCheckout(BaseModel):
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
-    total_gold = 0
-    total_potions = 0
-    sql_to_execute = f"""SELECT red_potion FROM customer WHERE id = {cart_id}"""
 
-    return {"total_potions_bought": 1, "total_gold_paid": 50}
+    with db.engine.begin() as connection:
+       sql_inventory = """SELECT num_red_potions FROM global_inventory"""
+       sql_customer = f"""SELECT red_potion, total FROM customer WHERE id = {cart_id}"""
+       result_requested = connection.execute(sqlalchemy.text(sql_customer))
+       result_in_inventory = connection.execute(sqlalchemy.text(sql_inventory))
+       
+       customer_requested =  result_requested.first()
+       potions_in_inventory = result_in_inventory.first()
+
+       if customer_requested.red_potions < potions_in_inventory.num_red_potions:
+           return "Not enough potions in inventory"
+       
+       total_gold = customer_requested.red_potions * red_potion_price
+       connection.execute(sqlalchemy.text(f"""UPDATE global_inventory
+                                           SET gold += {total_gold}, 
+                                           num_red_potions -= {customer_requested.red_potions}"""))
+       
+
+
+    return {"total_potions_bought": customer_requested.total, "total_gold_paid": total_gold}
