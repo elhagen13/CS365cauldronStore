@@ -71,13 +71,10 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
        
        total_gold = customer_requested.red_potion * red_potion_price
 
-       if cart_checkout.payment < total_gold:
-           return "Insufficient funds"
-
        connection.execute(sqlalchemy.text(f"""UPDATE global_inventory
                                            SET gold = gold +  {total_gold}, 
                                            num_red_potions = num_red_potions - {customer_requested.red_potion}"""))
        
 
 
-    return {"total_potions_bought": customer_requested.total, "total_gold_paid": total_gold}
+    return {"total_potions_bought": customer_requested.red_potion, "total_gold_paid": total_gold}
