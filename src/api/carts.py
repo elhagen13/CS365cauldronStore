@@ -19,12 +19,18 @@ class NewCart(BaseModel):
 
 @router.post("/")
 def create_cart(new_cart: NewCart):
-    #new cart = new customer
-    with db.engine.begin() as connection:
-        id = connection.execute(sqlalchemy.text("INSERT INTO customer DEFAULT VALUES RETURNING id"))
-        print(id)
+   #new cart = new customer
+   print(new_cart.customer)
+   with db.engine.begin() as connection:
+       customer_string = new_cart.customer
+       sql_to_execute = f"""INSERT INTO customer (customer_name) VALUES ({customer_string})
+         RETURNING id """
+       id = connection.execute(sqlalchemy.text(sql_to_execute))
+       print(id)
 
-    return {"cart_id": id}
+
+   return {"cart_id": id}
+
 
 
 @router.get("/{cart_id}")
@@ -42,10 +48,13 @@ class CartItem(BaseModel):
 
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
-    #customer, what they're buying and the quantity
-    """ """
+   #customer, what they're buying and the quantity
+   with db.engine.begin() as connection:
+       sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity} WHERE id = {cart_id}"""
+       connection.execute(sqlalchemy.text(sql_to_execute))
+       print(cart_item.quantity)
+   return "OK"
 
-    return "OK"
 
 
 class CartCheckout(BaseModel):
