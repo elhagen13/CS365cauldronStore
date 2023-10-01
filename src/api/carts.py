@@ -21,7 +21,7 @@ class NewCart(BaseModel):
 def create_cart(new_cart: NewCart):
    #new cart = new customer
     with db.engine.begin() as connection:
-        sql_to_execute = f"""INSERT INTO customer (customer_name) VALUES ({new_cart.customer}) RETURNING id """
+        sql_to_execute = f"""INSERT INTO customer (customer_name) VALUES ('{new_cart.customer}') RETURNING id """
         result = connection.execute(sqlalchemy.text(sql_to_execute))
    
     print(type(result))
