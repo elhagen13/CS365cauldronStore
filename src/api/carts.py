@@ -71,8 +71,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
        
        total_gold = customer_requested.red_potion * red_potion_price
        connection.execute(sqlalchemy.text(f"""UPDATE global_inventory
-                                           SET gold += {total_gold}, 
-                                           num_red_potions -= {customer_requested.red_potion}"""))
+                                           SET gold = gold +  {total_gold}, 
+                                           num_red_potions = num_red_potions - {customer_requested.red_potion}"""))
        
 
 
