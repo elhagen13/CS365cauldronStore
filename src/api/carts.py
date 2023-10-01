@@ -66,13 +66,13 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
        customer_requested =  result_requested.first()
        potions_in_inventory = result_in_inventory.first()
 
-       if customer_requested.red_potions < potions_in_inventory.num_red_potions:
+       if customer_requested.red_potion < potions_in_inventory.num_red_potions:
            return "Not enough potions in inventory"
        
-       total_gold = customer_requested.red_potions * red_potion_price
+       total_gold = customer_requested.red_potion * red_potion_price
        connection.execute(sqlalchemy.text(f"""UPDATE global_inventory
                                            SET gold += {total_gold}, 
-                                           num_red_potions -= {customer_requested.red_potions}"""))
+                                           num_red_potions -= {customer_requested.red_potion}"""))
        
 
 
