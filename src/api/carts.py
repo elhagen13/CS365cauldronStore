@@ -4,8 +4,7 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 
-
-cur_id = 1
+red_potion_price = 50
 
 router = APIRouter(
     prefix="/carts",
@@ -46,18 +45,19 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
    #customer, what they're buying and the quantity
    with db.engine.begin() as connection:
-       sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity} WHERE id = {cart_id}"""
+       sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity} WHERE id = {cart_id},
+       SET total = ({red_potion_price} * {cart_item.quantity})"""
        connection.execute(sqlalchemy.text(sql_to_execute))
        print(cart_item.quantity)
    return "OK"
-
-
 
 class CartCheckout(BaseModel):
     payment: str
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
-    """ """
+    total_gold = 0
+    total_potions = 0
+    sql_to_execute = f"""SELECT red_potion FROM customer WHERE id = {cart_id}"""
 
     return {"total_potions_bought": 1, "total_gold_paid": 50}
