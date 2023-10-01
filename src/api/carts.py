@@ -48,7 +48,7 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
    #customer, what they're buying and the quantity
    with db.engine.begin() as connection:
-       sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity} WHERE id = {cart_id},
+       sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity},
        total = total + ({red_potion_price} * {cart_item.quantity}) WHERE id = {cart_id}"""
        connection.execute(sqlalchemy.text(sql_to_execute))
 
