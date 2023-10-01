@@ -45,13 +45,13 @@ def get_bottle_plan():
         print(first_row.num_red_ml)
         quant = first_row.num_red_ml // 100
         
-        print(quant)
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.
     # Expressed in integers from 1 to 100 that must sum up to 100.
 
     # Initial logic: bottle all barrels into red potions.
-
+    if quant == 0:
+        return []
     return [
             {
                 "potion_type": [100, 0, 0, 0],
