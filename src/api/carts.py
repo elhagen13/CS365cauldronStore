@@ -78,7 +78,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                            SET gold = gold +  {total_gold}, 
                                            num_red_potions = num_red_potions - {customer_requested.red_potion}"""))
        connection.execute(sqlalchemy.text(f"""UPDATE customer
-                                            SET payment = {cart_checkout.payment} WHERE id = {cart_id}"""))
+                                            SET payment = "{cart_checkout.payment}" WHERE id = {cart_id}"""))
        
 
 
