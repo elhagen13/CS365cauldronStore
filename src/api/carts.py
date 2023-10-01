@@ -27,7 +27,6 @@ def create_cart(new_cart: NewCart):
     return {"cart_id": first_row.id}
 
 
-
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
     #identify a customer by their id
@@ -78,7 +77,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                                            SET gold = gold +  {total_gold}, 
                                            num_red_potions = num_red_potions - {customer_requested.red_potion}"""))
        connection.execute(sqlalchemy.text(f"""UPDATE customer
-                                            SET payment = "{cart_checkout.payment}" WHERE id = {cart_id}"""))
+                                            SET payment = {cart_checkout.payment} WHERE id = {cart_id}"""))
        
 
 
