@@ -47,7 +47,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     #check to see if number of red potions is less than 10, if so, 
-    #buy as much as your money will allow
+    #buy one
     print(wholesale_catalog)
     
     with db.engine.begin() as connection:
@@ -56,13 +56,16 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         """
 
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-        first_row = result.first()
-        #if your inventory is less than 10 buy a barrel
-        if(first_row.num_red_potions < 10) and first_row.gold > wholesale_catalog[0].price:
-            return [
-                {
-                    "sku": "SMALL_RED_BARREL",
-                    "quantity": 1,
-                }
-            ]
-        return []
+    first_row = result.first()
+    #if your inventory is less than 10 buy a barrel
+    if(first_row.num_red_potions < 10) and first_row.gold > wholesale_catalog[0].price:
+        quantity = first_row.gold // wholesale_catalog[0].price
+        if(quantity > wholesale_catalog[0].quantity):
+            quantity = wholesale_catalog[0].quantity
+        return [
+            {
+                "sku": "SMALL_RED_BARREL",
+                "quantity": quantity,
+            }
+        ]
+    return []

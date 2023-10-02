@@ -47,9 +47,14 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
    #customer, what they're buying and the quantity
    with db.engine.begin() as connection:
+       potions = """SELECT num_red_potions FROM global_inventory"""
        sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity},
        total = total + ({red_potion_price} * {cart_item.quantity}) WHERE id = {cart_id}"""
        connection.execute(sqlalchemy.text(sql_to_execute))
+       result = connection.execute(sqlalchemy.text(potions))
+       num_potions = result.first()
+       if num_potions.num_red_potions < cart_item.quantity:
+           return "Not enough potions in inventory"
 
    return "OK"
 
@@ -58,21 +63,15 @@ class CartCheckout(BaseModel):
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
-
+    sql_customer = f"""SELECT red_potion, total FROM customer WHERE id = {cart_id}"""
     with db.engine.begin() as connection:
-       sql_inventory = """SELECT num_red_potions FROM global_inventory"""
-       sql_customer = f"""SELECT red_potion, total FROM customer WHERE id = {cart_id}"""
        result_requested = connection.execute(sqlalchemy.text(sql_customer))
-       result_in_inventory = connection.execute(sqlalchemy.text(sql_inventory))
        
-       customer_requested =  result_requested.first()
-       potions_in_inventory = result_in_inventory.first()
+    customer_requested =  result_requested.first()
 
-       if customer_requested.red_potion > potions_in_inventory.num_red_potions:
-           return "Not enough potions in inventory"
-       
-       total_gold = customer_requested.red_potion * red_potion_price
+    total_gold = customer_requested.red_potion * red_potion_price
 
+    with db.engine.begin() as connection:   
        connection.execute(sqlalchemy.text(f"""UPDATE global_inventory
                                            SET gold = gold +  {total_gold}, 
                                            num_red_potions = num_red_potions - {customer_requested.red_potion}"""))

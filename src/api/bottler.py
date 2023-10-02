@@ -40,10 +40,9 @@ def get_bottle_plan():
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-        first_row = result.first()
-        #how many red potions can be made
-        print(first_row.num_red_ml)
-        quant = first_row.num_red_ml // 100
+    first_row = result.first()
+    #how many red potions can be made
+    quant = first_row.num_red_ml // 100
         
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.

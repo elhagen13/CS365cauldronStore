@@ -10,12 +10,12 @@ def get_catalog():
     """
     Each unique item combination must have only a single price.
     """
-    with db.engine.begin() as connection:
-        sql_to_execute = """ 
+    sql_to_execute = """ 
         SELECT num_red_potions FROM global_inventory
         """
+    with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-        first_row = result.first()
+    first_row = result.first()
     # Can return a max of 20 items.
     if(first_row.num_red_potions == 0):
         return []
