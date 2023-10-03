@@ -4,6 +4,8 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 
+barrels_to_be_delivered = 0
+
 router = APIRouter(
     prefix="/barrels",
     tags=["barrels"],
@@ -29,8 +31,9 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     total_ml = 0
 
     for barrel in barrels_delivered:
-        total_expenses += (barrel.price * barrel.quantity)  
-        total_ml += (barrel.ml_per_barrel * barrel.quantity)
+        total_expenses += barrel.price
+        total_ml += barrel.ml_per_barrel
+        
 
     with db.engine.begin() as connection:
         sql_to_execute = f""" 
@@ -61,13 +64,10 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     for barrel in wholesale_catalog:
         if barrel.sku == "SMALL_RED_BARREL":
             if(first_row.num_red_potions < 10) and first_row.gold >= barrel.price:
-                quantity = first_row.gold // barrel.price
-                if(quantity > barrel.quantity):
-                    quantity = barrel.quantity
                 return [
                     {
                         "sku": "SMALL_RED_BARREL",
-                        "quantity": quantity,
+                        "quantity": 1,
                     }
                 ]
             return []
