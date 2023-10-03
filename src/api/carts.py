@@ -48,14 +48,15 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
    #customer, what they're buying and the quantity
    with db.engine.begin() as connection:
        potions = """SELECT num_red_potions FROM global_inventory"""
-       sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity},
-       total = total + ({red_potion_price} * {cart_item.quantity}) WHERE id = {cart_id}"""
-       connection.execute(sqlalchemy.text(sql_to_execute))
        result = connection.execute(sqlalchemy.text(potions))
        num_potions = result.first()
        if num_potions.num_red_potions < cart_item.quantity:
            return "Not enough potions in inventory"
-
+       else:
+           sql_to_execute = f"""UPDATE customer SET {item_sku} = {cart_item.quantity},
+           total = total + ({red_potion_price} * {cart_item.quantity}) WHERE id = {cart_id}"""
+       connection.execute(sqlalchemy.text(sql_to_execute))
+       
    return "OK"
 
 class CartCheckout(BaseModel):
