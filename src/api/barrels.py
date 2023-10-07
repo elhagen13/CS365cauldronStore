@@ -4,8 +4,6 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 
-barrels_to_be_delivered = 0
-
 router = APIRouter(
     prefix="/barrels",
     tags=["barrels"],
@@ -75,14 +73,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     return_list = []
     priority_list = get_priority()
 
-
     for color in priority_list:
         if color == "red_potion":
-            sku = get_size(gold, first_row.num_red_potions, color)
+            sku = get_size(gold, first_row.num_red_potions, color, catalog)
         elif color == "green_potion":
-            sku = get_size(gold, first_row.num_green_potions, color)
+            sku = get_size(gold, first_row.num_green_potions, color, catalog)
         elif color == "blue_potion":
-            sku = get_size(gold, first_row.num_blue_potions, color)
+            sku = get_size(gold, first_row.num_blue_potions, color, catalog)
         
         gold -= catalog.get(sku, 0)
         if sku != None:
@@ -94,27 +91,27 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
      
 #what size of potion should be bought      
-def get_size(gold: int, inventory: int, type_potion: str):
+def get_size(gold: int, inventory: int, type_potion: str, catalog: dict):
     if type_potion == "red_potion":
-        if gold >= 500 and inventory < 100:
+        if "LARGE_RED_BARREL" in catalog and gold >= 500 and inventory < 100:
             return "LARGE_RED_BARREL"
-        elif gold >= 250 and inventory < 25:
+        elif "MEDIUM_RED_BARREL" in catalog and gold >= 250 and inventory < 25:
             return "MEDIUM_RED_BARREL"
-        elif gold >= 100 and inventory < 10:
+        elif "SMALL_RED_BARREL" in catalog and gold >= 100 and inventory < 10:
             return "SMALL_RED_BARREL"
     elif type_potion == "green_potion":
-        if gold >= 400 and inventory < 100:
+        if "LARGE_GREEN_BARREL" in catalog and gold >= 400 and inventory < 100:
             return "LARGE_GREEN_BARREL"
-        elif gold >= 250 and inventory < 25:
+        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= 250 and inventory < 25:
             return "MEDIUM_GREEN_BARREL"
-        elif gold >= 100 and inventory < 10:
+        elif "SMALL_GREEN_BARREL" in catalog and gold >= 100 and inventory < 10:
             return "SMALL_GREEN_BARREL"
     elif type_potion == "blue_potion":
-        if gold >= 600 and inventory < 100:
+        if "LARGE_BLUE_BARREL" in catalog and gold >= 600 and inventory < 100:
             return "LARGE_BLUE_BARREL"
-        elif gold >= 300 and inventory < 25:
+        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= 300 and inventory < 25:
             return "MEDIUM_BLUE_BARREL"
-        elif gold >= 120 and inventory < 10:
+        elif "SMALL_BLUE_BARREL" in catalog and gold >= 120 and inventory < 10:
             return "SMALL_BLUE_BARREL"
     return 
 
