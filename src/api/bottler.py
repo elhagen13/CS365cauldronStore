@@ -21,11 +21,29 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     #the result of going barrel to bottle
     #update, +bottles, -ml
     print(potions_delivered)
-    quant = potions_delivered[0].quantity
+    red_quant = 0
+    green_quant = 0
+    blue_quant = 0
+
+    for potion in potions_delivered:
+        print(potion)
+        if potion.potion_type == [100, 0, 0, 0]:
+            red_quant = potion.quantity
+        elif potion.potion_type == [0, 100, 0, 0]:
+            green_quant = potion.quantity
+        elif potion.potion_type == [0, 0, 100, 0]:
+            blue_quant = potion.quantity
+
+    print(red_quant , ' ' ,  green_quant , ' ' , blue_quant)
+
     sql_to_execute = f""" 
         UPDATE global_inventory 
-        SET num_red_potions = num_red_potions + {quant},
-            num_red_ml = num_red_ml - (100 * {quant})
+        SET num_red_potions = num_red_potions + {red_quant},
+            num_red_ml = num_red_ml - (100 * {red_quant}),
+            num_green_potions = num_green_potions + {green_quant},
+            num_green_ml = num_green_ml - (100 * {green_quant}),
+            num_blue_potions = num_blue_potions + {blue_quant},
+            num_blue_ml = num_blue_ml - (100 * {blue_quant})
         """ 
 
     with db.engine.begin() as connection:
@@ -37,24 +55,38 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 @router.post("/plan")
 def get_bottle_plan():
     sql_to_execute = """
-        SELECT num_red_ml FROM global_inventory
+        SELECT num_red_ml, num_green_ml, num_blue_ml FROM global_inventory
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
     first_row = result.first()
     #how many red potions can be made
-    quant = first_row.num_red_ml // 100
+    quant_red = first_row.num_red_ml // 100
+    quant_green = first_row.num_green_ml // 100
+    quant_blue = first_row.num_blue_ml // 100
         
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.
     # Expressed in integers from 1 to 100 that must sum up to 100.
 
     # Initial logic: bottle all barrels into red potions.
-    if quant == 0:
-        return []
-    return [
-            {
-                "potion_type": [100, 0, 0, 0],
-                "quantity": quant,
-            }
-        ]
+    return_list = []
+    if quant_red != 0:
+        return_list.append({
+            "potion_type": [100, 0, 0, 0],
+            "quantity": quant_red,
+        })
+    if quant_green != 0:
+        return_list.append({
+            "potion_type": [0, 100, 0, 0],
+            "quantity": quant_green,
+        })
+    if quant_blue != 0:
+        return_list.append({
+            "potion_type": [0, 0, 100, 0],
+            "quantity": quant_blue,
+        })
+    return return_list
+    
+    
+ 
