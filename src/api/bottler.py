@@ -65,12 +65,12 @@ def get_bottle_plan():
     quant_green = first_row.num_green_ml // 100
     quant_blue = first_row.num_blue_ml // 100
 
-    if quant_red + first_row.num_red_ml > 100:
-        quant_red = 100 - first_row.num_red_ml
-    if quant_green + first_row.num_green_ml > 100:
-        quant_green = 100 - first_row.num_green_ml
-    if quant_blue + first_row.num_blue_ml > 100:
-        quant_blue = 100 - first_row.num_blue_ml
+    if quant_red + first_row.num_red_potions > 100:
+        quant_red = 100 - first_row.num_red_potions
+    if quant_green + first_row.num_green_potions > 100:
+        quant_green = 100 - first_row.num_green_potions
+    if quant_blue + first_row.num_blue_potions > 100:
+        quant_blue = 100 - first_row.num_blue_potions
         
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.

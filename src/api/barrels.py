@@ -64,7 +64,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     
     with db.engine.begin() as connection:
         sql_to_execute = """ 
-        SELECT gold, num_red_potions, num_green_potions, num_blue_potions FROM global_inventory
+        SELECT gold, num_red_potions, num_green_potions, num_blue_potions, num_red_ml, num_green_ml, num_blue_ml FROM global_inventory
         """
         result = connection.execute(sqlalchemy.text(sql_to_execute))
     first_row = result.first()
@@ -75,11 +75,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
     for color in priority_list:
         if color == "red_potion":
-            sku = get_size(gold, first_row.num_red_potions, color, catalog)
+            sku = get_size(gold, first_row.num_red_potions, first_row.num_red_ml, color, catalog)
         elif color == "green_potion":
-            sku = get_size(gold, first_row.num_green_potions, color, catalog)
+            sku = get_size(gold, first_row.num_green_potions, first_row.num_green_ml, color, catalog)
         elif color == "blue_potion":
-            sku = get_size(gold, first_row.num_blue_potions, color, catalog)
+            sku = get_size(gold, first_row.num_blue_potions, first_row.num_blue_ml, color, catalog)
         
         gold -= catalog.get(sku, 0)
         if sku != None:
@@ -91,27 +91,27 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
      
 #what size of potion should be bought      
-def get_size(gold: int, inventory: int, type_potion: str, catalog: dict):
-    if type_potion == "red_potion":
-        if "LARGE_RED_BARREL" in catalog and gold >= 500 and inventory < 100:
+def get_size(gold: int, potions: int,  ml: int, type_potion: str, catalog: dict):
+    if type_potion == "red_potion" and ml < 10000:
+        if "LARGE_RED_BARREL" in catalog and gold >= 500 and potions < 100:
             return "LARGE_RED_BARREL"
-        elif "MEDIUM_RED_BARREL" in catalog and gold >= 250 and inventory < 25:
+        elif "MEDIUM_RED_BARREL" in catalog and gold >= 250 and potions < 25:
             return "MEDIUM_RED_BARREL"
-        elif "SMALL_RED_BARREL" in catalog and gold >= 100 and inventory < 10:
+        elif "SMALL_RED_BARREL" in catalog and gold >= 100 and potions < 10:
             return "SMALL_RED_BARREL"
-    elif type_potion == "green_potion":
-        if "LARGE_GREEN_BARREL" in catalog and gold >= 400 and inventory < 100:
+    elif type_potion == "green_potion" and ml < 10000:
+        if "LARGE_GREEN_BARREL" in catalog and gold >= 400 and potions < 100:
             return "LARGE_GREEN_BARREL"
-        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= 250 and inventory < 25:
+        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= 250 and potions < 25:
             return "MEDIUM_GREEN_BARREL"
-        elif "SMALL_GREEN_BARREL" in catalog and gold >= 100 and inventory < 10:
+        elif "SMALL_GREEN_BARREL" in catalog and gold >= 100 and potions < 10:
             return "SMALL_GREEN_BARREL"
-    elif type_potion == "blue_potion":
-        if "LARGE_BLUE_BARREL" in catalog and gold >= 600 and inventory < 100:
+    elif type_potion == "blue_potion" and ml < 10000:
+        if "LARGE_BLUE_BARREL" in catalog and gold >= 600 and potions < 100:
             return "LARGE_BLUE_BARREL"
-        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= 300 and inventory < 25:
+        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= 300 and potions < 25:
             return "MEDIUM_BLUE_BARREL"
-        elif "SMALL_BLUE_BARREL" in catalog and gold >= 120 and inventory < 10:
+        elif "SMALL_BLUE_BARREL" in catalog and gold >= 120 and potions < 10:
             return "SMALL_BLUE_BARREL"
     return 
 
