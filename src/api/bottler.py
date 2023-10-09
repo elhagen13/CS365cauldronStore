@@ -55,7 +55,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 @router.post("/plan")
 def get_bottle_plan():
     sql_to_execute = """
-        SELECT num_red_ml, num_green_ml, num_blue_ml FROM global_inventory
+        SELECT num_red_potions, num_green_potions, num_blue_potions, num_red_ml, num_green_ml, num_blue_ml FROM global_inventory
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
@@ -64,6 +64,13 @@ def get_bottle_plan():
     quant_red = first_row.num_red_ml // 100
     quant_green = first_row.num_green_ml // 100
     quant_blue = first_row.num_blue_ml // 100
+
+    if quant_red + first_row.num_red_ml > 100:
+        quant_red = 100 - first_row.num_red_ml
+    if quant_green + first_row.num_green_ml > 100:
+        quant_green = 100 - first_row.num_green_ml
+    if quant_blue + first_row.num_blue_ml > 100:
+        quant_blue = 100 - first_row.num_blue_ml
         
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.
