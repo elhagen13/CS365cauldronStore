@@ -95,21 +95,21 @@ def get_size(gold: int, potions: int,  ml: int, type_potion: str, catalog: dict)
     if type_potion == "red_potion" and ml < 10000:
         if "LARGE_RED_BARREL" in catalog and gold >= 500 and potions < 100:
             return "LARGE_RED_BARREL"
-        elif "MEDIUM_RED_BARREL" in catalog and gold >= 250 and potions < 25:
+        elif "MEDIUM_RED_BARREL" in catalog and gold >= 250 and potions < 50:
             return "MEDIUM_RED_BARREL"
         elif "SMALL_RED_BARREL" in catalog and gold >= 100 and potions < 10:
             return "SMALL_RED_BARREL"
     elif type_potion == "green_potion" and ml < 10000:
         if "LARGE_GREEN_BARREL" in catalog and gold >= 400 and potions < 100:
             return "LARGE_GREEN_BARREL"
-        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= 250 and potions < 25:
+        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= 250 and potions < 50:
             return "MEDIUM_GREEN_BARREL"
         elif "SMALL_GREEN_BARREL" in catalog and gold >= 100 and potions < 10:
             return "SMALL_GREEN_BARREL"
     elif type_potion == "blue_potion" and ml < 10000:
         if "LARGE_BLUE_BARREL" in catalog and gold >= 600 and potions < 100:
             return "LARGE_BLUE_BARREL"
-        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= 300 and potions < 25:
+        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= 300 and potions < 50:
             return "MEDIUM_BLUE_BARREL"
         elif "SMALL_BLUE_BARREL" in catalog and gold >= 120 and potions < 10:
             return "SMALL_BLUE_BARREL"
