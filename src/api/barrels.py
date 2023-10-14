@@ -24,30 +24,31 @@ class Barrel(BaseModel):
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
     #once delivered, subtract the total dollar amount from coins
     print(barrels_delivered)
-
     total_expenses = 0
-    total_red_ml = 0
-    total_green_ml = 0
-    total_blue_ml = 0
 
     for barrel in barrels_delivered:
-        total_expenses += barrel.price
-        if barrel.potion_type == [1, 0, 0, 0]:
-            total_red_ml += barrel.ml_per_barrel
-        elif barrel.potion_type == [0, 1, 0, 0]:
-            total_green_ml += barrel.ml_per_barrel
-        elif barrel.potion_type == [0, 0, 1, 0]:
-            total_blue_ml += barrel.ml_per_barrel
-
+        total_expenses += (barrel.price * barrel.quantity)
+        if barrel.potion_type == [1,0,0,0]:
+            ml = "num_red_ml"
+        elif barrel.potion_type == [0,1,0,0]:
+            ml = "num_green_ml"
+        elif barrel.potion_type == [0,0,1,0]:
+            ml = "num_blue_ml"
+        elif barrel.potion_type == [0,0,0,1]:
+            ml = "num_dark_ml"
+            
+        with db.engine.begin() as connection:
+            sql_to_execute = f""" 
+            UPDATE global_inventory 
+            SET {ml} = {ml} + ({barrel.ml_per_barrel} * {barrel.quantity})
+            """
+            connection.execute(sqlalchemy.text(sql_to_execute))
+    
     with db.engine.begin() as connection:
         sql_to_execute = f""" 
         UPDATE global_inventory 
-        SET gold = gold - {total_expenses},
-            num_red_ml = num_red_ml + {total_red_ml},
-            num_green_ml = num_green_ml + {total_green_ml},
-            num_blue_ml = num_blue_ml + {total_blue_ml}
-         """
-
+        SET gold = gold - {total_expenses}
+        """
         connection.execute(sqlalchemy.text(sql_to_execute))
 
     return "OK"
@@ -60,11 +61,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
     catalog = {}
     for barrel in wholesale_catalog:
-        catalog[barrel.sku] = barrel.price
+        catalog[barrel.sku] = barrel
     
     with db.engine.begin() as connection:
         sql_to_execute = """ 
-        SELECT gold, num_red_potions, num_green_potions, num_blue_potions, num_red_ml, num_green_ml, num_blue_ml FROM global_inventory
+        SELECT gold FROM global_inventory
         """
         result = connection.execute(sqlalchemy.text(sql_to_execute))
     first_row = result.first()
@@ -72,80 +73,73 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     gold = first_row.gold
     return_list = []
     priority_list = get_priority()
+    print(priority_list)
 
     for color in priority_list:
-        if color == "red_potion":
-            sku = get_size(gold, first_row.num_red_potions, first_row.num_red_ml, color, catalog)
-        elif color == "green_potion":
-            sku = get_size(gold, first_row.num_green_potions, first_row.num_green_ml, color, catalog)
-        elif color == "blue_potion":
-            sku = get_size(gold, first_row.num_blue_potions, first_row.num_blue_ml, color, catalog)
-        
-        gold -= catalog.get(sku, 0)
+        sku = get_size(gold, priority_list[color], color, catalog)
         if sku != None:
+            quantity = get_quant(gold, priority_list[color], sku, catalog)
+            gold -= (catalog[sku].price * quantity)
             return_list.append({
                 "sku": sku,
-                "quantity": 1,
+                "quantity": quantity
             })
+
     return return_list
 
      
 #what size of potion should be bought      
-def get_size(gold: int, potions: int,  ml: int, type_potion: str, catalog: dict):
-    if type_potion == "red_potion" and ml < 10000:
-        if "LARGE_RED_BARREL" in catalog and gold >= 500 and potions < 100:
+def get_size(gold: int,  ml: int, type_potion: str, catalog: dict):
+    print("type potion: "+ type_potion + "\nml: ", ml)
+    if type_potion == "red":
+        if "LARGE_RED_BARREL" in catalog and gold >= catalog["LARGE_RED_BARREL"].price:
             return "LARGE_RED_BARREL"
-        elif "MEDIUM_RED_BARREL" in catalog and gold >= 250 and potions < 50:
+        elif "MEDIUM_RED_BARREL" in catalog and gold >= catalog["MEDIUM_RED_BARREL"].price:
             return "MEDIUM_RED_BARREL"
-        elif "SMALL_RED_BARREL" in catalog and gold >= 100 and potions < 10:
+        elif "SMALL_RED_BARREL" in catalog and gold >= catalog["SMALL_RED_BARREL"].price:
             return "SMALL_RED_BARREL"
-    elif type_potion == "green_potion" and ml < 10000:
-        if "LARGE_GREEN_BARREL" in catalog and gold >= 400 and potions < 100:
+    elif type_potion == "green":
+        if "LARGE_GREEN_BARREL" in catalog and gold >= catalog["LARGE_GREEN_BARREL"].price:
             return "LARGE_GREEN_BARREL"
-        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= 250 and potions < 50:
+        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= catalog["SMALL_GREEN_BARREL"].price:
             return "MEDIUM_GREEN_BARREL"
-        elif "SMALL_GREEN_BARREL" in catalog and gold >= 100 and potions < 10:
+        elif "SMALL_GREEN_BARREL" in catalog and gold >= catalog["SMALL_GREEN_BARREL"].price:
             return "SMALL_GREEN_BARREL"
-    elif type_potion == "blue_potion" and ml < 10000:
-        if "LARGE_BLUE_BARREL" in catalog and gold >= 600 and potions < 100:
+    elif type_potion == "blue":
+        if "LARGE_BLUE_BARREL" in catalog and gold >= catalog["LARGE_BLUE_BARREL"].price:
             return "LARGE_BLUE_BARREL"
-        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= 300 and potions < 50:
+        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= catalog["MEDIUM_BLUE_BARREL"].price:
             return "MEDIUM_BLUE_BARREL"
-        elif "SMALL_BLUE_BARREL" in catalog and gold >= 120 and potions < 10:
+        elif "SMALL_BLUE_BARREL" in catalog and gold >= catalog["SMALL_BLUE_BARREL"].price:
             return "SMALL_BLUE_BARREL"
+    elif type_potion == "dark":
+        if "LARGE_DARK_BARREL" in catalog and gold >= catalog["LARGE_DARK_BARREL"].price:
+            return "LARGE_DARK_BARREL"
+        elif "MEDIUM_DARK_BARREL" in catalog and gold >= catalog["MEDIUM_DARK_BARREL"].price:
+            return "MEDIUM_DARK_BARREL"
+        elif "SMALL_DARK_BARREL" in catalog and gold >= catalog["SMALL_DARK_BARREL"].price:
+            return "SMALL_DARK_BARREL"
     return 
+
+def get_quant(gold: int, ml: int, sku: str, catalog: dict):
+    if gold < 10000:
+        return 1
+    desired_ml = 20000 - ml
+    total = desired_ml // catalog[sku].ml_per_barrel
+    return min(total, catalog[sku].quantity)
+    
 
 #decides the priority of the potions, which one should be bought first
 def get_priority():
-    sql_to_execute = """SELECT num_red_potions, num_green_potions, num_blue_potions FROM global_inventory"""
+    sql_to_execute = """SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory"""
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
     first_row = result.first()
+
+    dictionary = {"red": first_row.num_red_ml, "green": first_row.num_green_ml, "blue": first_row.num_blue_ml, 
+                  "dark": first_row.num_dark_ml}
     
-    if(first_row.num_red_potions <= first_row.num_green_potions and first_row.num_red_potions <= first_row.num_blue_potions):
-        priority1 = "red_potion"
-        if(first_row.num_green_potions <= first_row.num_blue_potions):
-            priority2 = "green_potion"
-            priority3 = "blue_potion"
-        else:
-            priority2 = "blue_potion"
-            priority3 = "green_potion"
-    elif(first_row.num_green_potions <= first_row.num_red_potions and first_row.num_green_potions <= first_row.num_blue_potions):
-        priority1 = "green_potion"
-        if(first_row.num_red_potions <= first_row.num_blue_potions):
-            priority2 = "red_potion"
-            priority3 = "blue_potion"
-        else:
-            priority2 = "blue_potion"
-            priority3 = "red_potion"
-    else:
-        priority1 = "blue_potion"
-        if(first_row.num_red_potions <= first_row.num_green_potions):
-            priority2 = "red_potion"
-            priority3 = "green_potion"
-        else:
-            priority2 = "green_potion"
-            priority3 = "red_potion"
-       
-    return [priority1, priority2, priority3]
+    sorted_list = dict(sorted(dictionary.items(), key = lambda color : color[1]))
+
+    return sorted_list
 

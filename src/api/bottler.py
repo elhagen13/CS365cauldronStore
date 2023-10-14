@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+from collections import OrderedDict
 
 
 router = APIRouter(
@@ -24,30 +25,32 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     red_quant = 0
     green_quant = 0
     blue_quant = 0
+    dark_quant = 0
 
     for potion in potions_delivered:
-        print(potion)
-        if potion.potion_type == [100, 0, 0, 0]:
-            red_quant = potion.quantity
-        elif potion.potion_type == [0, 100, 0, 0]:
-            green_quant = potion.quantity
-        elif potion.potion_type == [0, 0, 100, 0]:
-            blue_quant = potion.quantity
+        red_quant += (potion.potion_type[0] * potion.quantity)
+        green_quant += (potion.potion_type[1] * potion.quantity)
+        blue_quant += (potion.potion_type[2] * potion.quantity)
+        dark_quant += (potion.potion_type[3] * potion.quantity)
 
-    print(red_quant , ' ' ,  green_quant , ' ' , blue_quant)
+        sql_to_execute = """UPDATE potions 
+                            SET inventory = inventory + :quantity
+                            WHERE recipe = :recipe"""
+        
+        with db.engine.begin() as connection:
+            connection.execute(sqlalchemy.text(sql_to_execute), [{"quantity": potion.quantity, "recipe": potion.potion_type}])
 
-    sql_to_execute = f""" 
+    sql_to_execute = """ 
         UPDATE global_inventory 
-        SET num_red_potions = num_red_potions + {red_quant},
-            num_red_ml = num_red_ml - (100 * {red_quant}),
-            num_green_potions = num_green_potions + {green_quant},
-            num_green_ml = num_green_ml - (100 * {green_quant}),
-            num_blue_potions = num_blue_potions + {blue_quant},
-            num_blue_ml = num_blue_ml - (100 * {blue_quant})
+        SET num_red_ml = num_red_ml - :red_quant,
+            num_green_ml = num_green_ml - :green_quant,
+            num_blue_ml = num_blue_ml - :blue_quant,
+            num_dark_ml = num_dark_ml - :dark_quant
         """ 
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(sql_to_execute))
+        connection.execute(sqlalchemy.text(sql_to_execute), [{"red_quant": red_quant, "green_quant": green_quant,
+                                                             "blue_quant": blue_quant, "dark_quant": dark_quant}])
 
     return "OK"
 
@@ -55,45 +58,67 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
 @router.post("/plan")
 def get_bottle_plan():
     sql_to_execute = """
-        SELECT num_red_potions, num_green_potions, num_blue_potions, num_red_ml, num_green_ml, num_blue_ml FROM global_inventory
+        SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
     first_row = result.first()
-    #how many red potions can be made
-    quant_red = first_row.num_red_ml // 100
-    quant_green = first_row.num_green_ml // 100
-    quant_blue = first_row.num_blue_ml // 100
+    #returns a dictionary of potions with their quantity
+    #goal is to go down, 
+    red = first_row.num_red_ml
+    green = first_row.num_green_ml
+    blue = first_row.num_blue_ml
+    dark = first_row.num_dark_ml
 
-    if quant_red + first_row.num_red_potions > 100:
-        quant_red = 100 - first_row.num_red_potions
-    if quant_green + first_row.num_green_potions > 100:
-        quant_green = 100 - first_row.num_green_potions
-    if quant_blue + first_row.num_blue_potions > 100:
-        quant_blue = 100 - first_row.num_blue_potions
-        
-    # Each bottle has a quantity of what proportion of red, blue, and
-    # green potion to add.
-    # Expressed in integers from 1 to 100 that must sum up to 100.
+    priority_list = get_priority()
 
-    # Initial logic: bottle all barrels into red potions.
     return_list = []
-    if quant_red != 0:
-        return_list.append({
-            "potion_type": [100, 0, 0, 0],
-            "quantity": quant_red,
+    
+    for potion in priority_list:
+        quantity = min(priority_list[potion]["wanted"], get_quant(priority_list[potion]["recipe"], red, green, blue, dark))
+        #mix as many bottles as you can
+        red = red - (quantity * priority_list[potion]["recipe"][0])
+        green = green - (quantity * priority_list[potion]["recipe"][1])
+        blue = blue - (quantity * priority_list[potion]["recipe"][2])
+        dark = dark - (quantity * priority_list[potion]["recipe"][3])
+        
+        if quantity > 0:
+            return_list.append({
+            "potion_type": priority_list[potion]["recipe"],
+            "quantity": quantity,
         })
-    if quant_green != 0:
-        return_list.append({
-            "potion_type": [0, 100, 0, 0],
-            "quantity": quant_green,
-        })
-    if quant_blue != 0:
-        return_list.append({
-            "potion_type": [0, 0, 100, 0],
-            "quantity": quant_blue,
-        })
+
     return return_list
+
+def get_quant(recipe: list[int], red: int, green: int, blue: int, dark: int):
+    #the number of potions that can be made from current inventory
+    array = []
+    if recipe[0] != 0:
+        array.append(red // recipe[0])
+    if recipe[1] != 0:
+        array.append(green // recipe[1])
+    if recipe[2] != 0:
+        array.append(blue // recipe[2])
+    if recipe[3] != 0:
+        array.append(dark // recipe[3])
+
+    quant = min(array)
+    return quant
     
     
- 
+def get_priority():
+    sql_to_execute = """SELECT * FROM potions"""
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+    
+
+    dictionary = {}
+    for row in result:
+        dictionary[row.potion_type] = {
+            'wanted': row.desired_inventory - row.inventory,
+            'recipe': row.recipe
+        }
+    
+    sorted_list = dict(sorted(dictionary.items(), key = lambda quantity : quantity[1]["wanted"], reverse = True))
+    print(sorted_list)
+    return sorted_list
