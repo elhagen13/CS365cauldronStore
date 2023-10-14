@@ -50,7 +50,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     with db.engine.begin() as connection:
         sql_to_execute = """SELECT inventory FROM potions WHERE potion_type = :item_sku"""
         result = connection.execute(sqlalchemy.text(sql_to_execute), [{"item_sku": item_sku}])
-    first_row = result.first()
+        first_row = result.first()
     
     if first_row.inventory < cart_item.quantity:
         raise HTTPException(status_code=404, detail = "Not enough potions in inventory")

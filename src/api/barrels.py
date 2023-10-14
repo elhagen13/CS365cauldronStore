@@ -68,7 +68,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         SELECT gold FROM global_inventory
         """
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-    first_row = result.first()
+        first_row = result.first()
 
     gold = first_row.gold
     return_list = []
@@ -134,7 +134,7 @@ def get_priority():
     sql_to_execute = """SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory"""
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-    first_row = result.first()
+        first_row = result.first()
 
     dictionary = {"red": first_row.num_red_ml, "green": first_row.num_green_ml, "blue": first_row.num_blue_ml, 
                   "dark": first_row.num_dark_ml}

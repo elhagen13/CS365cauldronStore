@@ -62,7 +62,7 @@ def get_bottle_plan():
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-    first_row = result.first()
+        first_row = result.first()
     #returns a dictionary of potions with their quantity
     #goal is to go down, 
     red = first_row.num_red_ml
