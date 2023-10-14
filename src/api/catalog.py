@@ -28,5 +28,7 @@ def get_catalog():
                 "potion_type": row.recipe
             })
     
+    return_list = sorted(return_list, key = lambda inventory : inventory["quantity"], reverse = True)
+    
 
-    return return_list
+    return return_list[:6]
