@@ -112,12 +112,12 @@ def get_priority():
         result = connection.execute(sqlalchemy.text(sql_to_execute))
     
 
-    dictionary = {}
-    for row in result:
-        dictionary[row.potion_type] = {
-            'wanted': row.desired_inventory - row.inventory,
-            'recipe': row.recipe
-        }
+        dictionary = {}
+        for row in result:
+            dictionary[row.potion_type] = {
+                'wanted': row.desired_inventory - row.inventory,
+                'recipe': row.recipe
+            }
     
     sorted_list = dict(sorted(dictionary.items(), key = lambda quantity : quantity[1]["wanted"], reverse = True))
     print(sorted_list)

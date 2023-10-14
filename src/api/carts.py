@@ -78,14 +78,14 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                             WHERE new_table.user_id = :cart_id"""
         result = connection.execute(sqlalchemy.text(sql_to_execute), [{"cart_id": cart_id}])
     
-    total_price = 0
-    total_quantity = 0
-    for row in result:
-        print(row)
-        if row.quantity > row.inventory:
-            raise HTTPException(status_code=404, detail = "Not enough potions in inventory")
-        total_price += (row.quantity * row.price)
-        total_quantity += row.quantity
+        total_price = 0
+        total_quantity = 0
+        for row in result:
+            print(row)
+            if row.quantity > row.inventory:
+                raise HTTPException(status_code=404, detail = "Not enough potions in inventory")
+            total_price += (row.quantity * row.price)
+            total_quantity += row.quantity
 
 
     with db.engine.begin() as connection:

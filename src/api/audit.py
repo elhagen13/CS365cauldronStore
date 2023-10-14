@@ -19,12 +19,12 @@ def get_inventory():
         result = connection.execute(sqlalchemy.text(get_potion))
         glo_invent = connection.execute(sqlalchemy.text(get_ml))
         inventory = glo_invent.first()
-    total_ml = inventory.num_red_ml + inventory.num_green_ml + inventory.num_blue_ml + inventory.num_dark_ml
+        total_ml = inventory.num_red_ml + inventory.num_green_ml + inventory.num_blue_ml + inventory.num_dark_ml
 
     
-    total_potions = 0
-    for row in result:
-        total_potions += row.inventory
+        total_potions = 0
+        for row in result:
+            total_potions += row.inventory
     
     return {"number_of_potions": total_potions, "ml_in_barrels": total_ml, "gold": inventory.gold}
 
