@@ -79,11 +79,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         sku = get_size(gold, priority_list[color], color, catalog)
         if sku != None:
             quantity = get_quant(gold, priority_list[color], sku, catalog)
-            gold -= (catalog[sku].price * quantity)
-            return_list.append({
-                "sku": sku,
-                "quantity": quantity
-            })
+            if(quantity != 0): 
+                gold -= (catalog[sku].price * quantity)
+                return_list.append({
+                    "sku": sku,
+                    "quantity": quantity
+                })
 
     return return_list
 
