@@ -25,31 +25,43 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     #once delivered, subtract the total dollar amount from coins
     print(barrels_delivered)
     total_expenses = 0
-
-    for barrel in barrels_delivered:
-        total_expenses += (barrel.price * barrel.quantity)
-        if barrel.potion_type == [1,0,0,0]:
-            ml = "num_red_ml"
-        elif barrel.potion_type == [0,1,0,0]:
-            ml = "num_green_ml"
-        elif barrel.potion_type == [0,0,1,0]:
-            ml = "num_blue_ml"
-        elif barrel.potion_type == [0,0,0,1]:
-            ml = "num_dark_ml"
-            
-        with db.engine.begin() as connection:
-            sql_to_execute = f""" 
-            UPDATE global_inventory 
-            SET {ml} = {ml} + ({barrel.ml_per_barrel} * {barrel.quantity})
-            """
-            connection.execute(sqlalchemy.text(sql_to_execute))
     
     with db.engine.begin() as connection:
-        sql_to_execute = f""" 
-        UPDATE global_inventory 
-        SET gold = gold - {total_expenses}
+        sql_to_execute = """ 
+        INSERT INTO transactions (description) VALUES 
+        (:description) RETURNING id
         """
-        connection.execute(sqlalchemy.text(sql_to_execute))
+        result = connection.execute(sqlalchemy.text(sql_to_execute), 
+        [{"description" : "Purchased barrels"}])
+            
+        id = result.first().id
+
+    for barrel in barrels_delivered:
+        print(barrel)
+        total_expenses += (barrel.price * barrel.quantity)
+        if barrel.potion_type == [1,0,0,0]:
+            ml = "red_ml"
+        elif barrel.potion_type == [0,1,0,0]:
+            ml = "green_ml"
+        elif barrel.potion_type == [0,0,1,0]:
+            ml = "blue_ml"
+        elif barrel.potion_type == [0,0,0,1]:
+            ml = "dark_ml"
+            
+        with db.engine.begin() as connection:
+            sql_to_execute = """ 
+            INSERT INTO ledger (transaction_id, type, change) VALUES
+            (:id, :barrel_type, :quantity)
+            """
+            connection.execute(sqlalchemy.text(sql_to_execute), [{"id": id, 
+                "barrel_type": ml, "quantity": barrel.ml_per_barrel * barrel.quantity}])
+    
+
+    with db.engine.begin() as connection:
+        sql_to_execute =""" 
+        INSERT INTO ledger (transaction_id, type, change) VALUES (:id, 'gold', :change)
+        """
+        connection.execute(sqlalchemy.text(sql_to_execute), [{"id": id, "change" : -1 * total_expenses}])
 
     return "OK"
 
@@ -65,12 +77,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     
     with db.engine.begin() as connection:
         sql_to_execute = """ 
-        SELECT gold FROM global_inventory
+        SELECT COALESCE(SUM(change), 0) AS total_gold FROM ledger WHERE type = 'gold'
         """
         result = connection.execute(sqlalchemy.text(sql_to_execute))
         first_row = result.first()
 
-    gold = first_row.gold
+    gold = first_row.total_gold
+    print(gold)
     return_list = []
     priority_list = get_priority()
     print(priority_list)
@@ -85,7 +98,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     "sku": sku,
                     "quantity": quantity
                 })
-
+    
+    
     return return_list
 
      
@@ -132,7 +146,13 @@ def get_quant(gold: int, ml: int, sku: str, catalog: dict):
 
 #decides the priority of the potions, which one should be bought first
 def get_priority():
-    sql_to_execute = """SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory"""
+    sql_to_execute = """SELECT 
+    SUM(CASE WHEN type = 'red_ml' THEN change ELSE 0 END) AS num_red_ml, 
+    SUM(CASE WHEN type = 'green_ml' THEN change ELSE 0 END) AS num_green_ml,
+    SUM(CASE WHEN type = 'blue_ml' THEN change ELSE 0 END) AS num_blue_ml,
+    SUM(CASE WHEN type = 'dark_ml' THEN change ELSE 0 END) AS num_dark_ml
+    FROM ledger
+    """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
         first_row = result.first()
@@ -141,6 +161,7 @@ def get_priority():
                   "dark": first_row.num_dark_ml}
     
     sorted_list = dict(sorted(dictionary.items(), key = lambda color : color[1]))
+    print(sorted_list)
 
     return sorted_list
 

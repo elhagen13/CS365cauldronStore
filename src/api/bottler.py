@@ -22,43 +22,57 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     #the result of going barrel to bottle
     #update, +bottles, -ml
     print(potions_delivered)
-    red_quant = 0
-    green_quant = 0
-    blue_quant = 0
-    dark_quant = 0
-
-    for potion in potions_delivered:
-        red_quant += (potion.potion_type[0] * potion.quantity)
-        green_quant += (potion.potion_type[1] * potion.quantity)
-        blue_quant += (potion.potion_type[2] * potion.quantity)
-        dark_quant += (potion.potion_type[3] * potion.quantity)
-
-        sql_to_execute = """UPDATE potions 
-                            SET inventory = inventory + :quantity
-                            WHERE recipe = :recipe"""
-        
-        with db.engine.begin() as connection:
-            connection.execute(sqlalchemy.text(sql_to_execute), [{"quantity": potion.quantity, "recipe": potion.potion_type}])
+    dictionary = {"red_ml" : 0, "green_ml" : 0, "blue_ml" : 0, "dark_ml" : 0}
 
     sql_to_execute = """ 
-        UPDATE global_inventory 
-        SET num_red_ml = num_red_ml - :red_quant,
-            num_green_ml = num_green_ml - :green_quant,
-            num_blue_ml = num_blue_ml - :blue_quant,
-            num_dark_ml = num_dark_ml - :dark_quant
-        """ 
-
+            INSERT INTO transactions (description) VALUES 
+            ('Mixed potions') RETURNING id
+            """
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(sql_to_execute), [{"red_quant": red_quant, "green_quant": green_quant,
-                                                             "blue_quant": blue_quant, "dark_quant": dark_quant}])
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+            
+        id = result.first().id
+
+
+    for potion in potions_delivered:
+        dictionary["red_ml"] += (potion.potion_type[0] * potion.quantity)
+        dictionary["green_ml"] += (potion.potion_type[1] * potion.quantity)
+        dictionary["blue_ml"] += (potion.potion_type[2] * potion.quantity)
+        dictionary["dark_ml"] += (potion.potion_type[3] * potion.quantity)
+
+        sql_to_execute = """SELECT potion_type FROM potions WHERE recipe = :recipe"""
+        with db.engine.begin() as connection:
+            potion_name = connection.execute(sqlalchemy.text(sql_to_execute), [{"recipe" : potion.potion_type}]).first().potion_type
+        
+        sql_to_execute = """ 
+        INSERT INTO ledger (transaction_id, type, potion_type, change) VALUES
+        (:id, 'potion', :potion_type, :total_mixed)
+        """
+        with db.engine.begin() as connection:
+            connection.execute(sqlalchemy.text(sql_to_execute), [{"id": id, 
+            "potion_type": potion_name, "total_mixed": potion.quantity}])
+            
+
+    for color in dictionary:
+        if dictionary[color] > 0:
+            sql_to_execute = """INSERT INTO ledger (transaction_id, type, change) VALUES
+            (:id, :color, :ml)"""
+
+            with db.engine.begin() as connection:
+                connection.execute(sqlalchemy.text(sql_to_execute), 
+                [{"id": id, "color": color, "ml": - 1 * dictionary[color]}])
 
     return "OK"
 
 # Gets called 4 times a day
 @router.post("/plan")
 def get_bottle_plan():
-    sql_to_execute = """
-        SELECT num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory
+    sql_to_execute = """SELECT 
+    SUM(CASE WHEN type = 'red_ml' THEN change ELSE 0 END) AS num_red_ml, 
+    SUM(CASE WHEN type = 'green_ml' THEN change ELSE 0 END) AS num_green_ml,
+    SUM(CASE WHEN type = 'blue_ml' THEN change ELSE 0 END) AS num_blue_ml,
+    SUM(CASE WHEN type = 'dark_ml' THEN change ELSE 0 END) AS num_dark_ml
+    FROM ledger
     """
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
@@ -107,15 +121,18 @@ def get_quant(recipe: list[int], red: int, green: int, blue: int, dark: int):
     
     
 def get_priority():
-    sql_to_execute = """SELECT * FROM potions"""
+    sql_to_execute = """SELECT potion_type, recipe, desired_inventory FROM potions"""
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(sql_to_execute))
-    
 
         dictionary = {}
         for row in result:
+            sql_to_execute = """SELECT COALESCE(SUM(change), 0) AS total FROM ledger WHERE potion_type = :potion_type"""
+            total = connection.execute(sqlalchemy.text(sql_to_execute), 
+                                       [{"potion_type" : row.potion_type}])
+            inventory = total.first()
             dictionary[row.potion_type] = {
-                'wanted': row.desired_inventory - row.inventory,
+                'wanted': row.desired_inventory - inventory.total,
                 'recipe': row.recipe
             }
     

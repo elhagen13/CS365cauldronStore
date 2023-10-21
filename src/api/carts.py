@@ -48,7 +48,7 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     with db.engine.begin() as connection:
-        sql_to_execute = """SELECT inventory FROM potions WHERE potion_type = :item_sku"""
+        sql_to_execute = """SELECT COALESCE(SUM(change), 0) AS inventory FROM ledger WHERE potion_type = :item_sku"""
         result = connection.execute(sqlalchemy.text(sql_to_execute), [{"item_sku": item_sku}])
         first_row = result.first()
     
@@ -70,36 +70,53 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     with db.engine.begin() as connection:
-        sql_to_execute = """SELECT new_table.quantity, new_table.price, new_table.inventory
-                            FROM (
-                                SELECT orders.*, potions.price, potions.inventory
-                                FROM orders JOIN potions ON orders.potion_type = potions.potion_type
-                            ) AS new_table
-                            WHERE new_table.user_id = :cart_id"""
+        sql_to_execute = """SELECT orders.potion_type, orders.quantity, potions.price, ledger.inventory, customer.customer_name
+        FROM orders
+        JOIN potions ON orders.potion_type = potions.potion_type
+        JOIN(
+            SELECT potion_type, SUM(change) AS inventory FROM ledger
+            WHERE potion_type IS NOT NULL GROUP BY potion_type
+        ) AS ledger ON orders.potion_type = ledger.potion_type
+        JOIN customer ON orders.user_id = customer.user_id
+        WHERE orders.user_id = :cart_id
+        """
         result = connection.execute(sqlalchemy.text(sql_to_execute), [{"cart_id": cart_id}])
-    
         total_price = 0
         total_quantity = 0
+        dictionary = {}
         for row in result:
             print(row)
+            customer_name = row.customer_name
             if row.quantity > row.inventory:
                 raise HTTPException(status_code=404, detail = "Not enough potions in inventory")
+            
+            if row.potion_type in dictionary:
+                dictionary[row.potion_type]['quantity'] += row.quantity
+            else:
+                dictionary[row.potion_type] = {
+                    'quantity': row.quantity,
+                    'price': row.price,
+                    'inventory': row.inventory,
+                    'customer': row.customer_name
+                }
             total_price += (row.quantity * row.price)
             total_quantity += row.quantity
 
+        sql_to_execute = """INSERT INTO transactions (description) VALUES (:description) RETURNING id"""
+        id = connection.execute(sqlalchemy.text(sql_to_execute), [{"description": "Sold " + str(total_quantity) + 
+        " potions to " + customer_name}]).first().id
+        
+        for order in dictionary:
+            sql_to_execute = """INSERT INTO ledger (transaction_id, type, potion_type, change)
+             VALUES (:id, 'potion', :potion_type, :change) """
+            connection.execute(sqlalchemy.text(sql_to_execute),
+                               [{"id": id, "potion_type": order,
+                                 "change": -1 * dictionary[order]['quantity']}])
+            
 
-    with db.engine.begin() as connection:
-        sql_to_execute = """UPDATE potions
-                        SET inventory = potions.inventory - orders.quantity
-                        FROM orders
-                        WHERE potions.potion_type = orders.potion_type and 
-                        orders.user_id = :cart_id """
-        other_executable = """UPDATE global_inventory
-                            SET gold = gold + :total_price"""
-        connection.execute(sqlalchemy.text(sql_to_execute), [{"cart_id": cart_id}])
-        connection.execute(sqlalchemy.text(other_executable), [{"total_price": total_price}])
-
-
+        sql_to_execute = """INSERT INTO ledger (transaction_id, type, change) 
+        VALUES (:id, 'gold', :change )"""
+        connection.execute(sqlalchemy.text(sql_to_execute), [{"id": id, "change": total_price}])
 
     return {"total_potions_bought": total_quantity, "total_gold_paid": total_price}
     
