@@ -13,20 +13,20 @@ router = APIRouter(
 
 @router.get("/inventory")
 def get_inventory():
-    get_potion = """SELECT inventory FROM potions"""
-    get_ml = """SELECT gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml FROM global_inventory"""
+    get_quant = """SELECT type, COALESCE(SUM(change),0) AS total FROM ledger GROUP BY type"""
+    total_ml = 0
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(get_potion))
-        glo_invent = connection.execute(sqlalchemy.text(get_ml))
-        inventory = glo_invent.first()
-        total_ml = inventory.num_red_ml + inventory.num_green_ml + inventory.num_blue_ml + inventory.num_dark_ml
-
-    
-        total_potions = 0
+        result = connection.execute(sqlalchemy.text(get_quant))
         for row in result:
-            total_potions += row.inventory
+            if row.type == "gold":
+                gold = row.total
+            if row.type == "potion":
+                potion = row.total
+            if row.type == "red_ml" or row.type == "green_ml" or row.type == "blue_ml" or row.type == "dark_ml":
+                total_ml += row.total
+        
     
-    return {"number_of_potions": total_potions, "ml_in_barrels": total_ml, "gold": inventory.gold}
+    return {"number_of_potions": potion, "ml_in_barrels": total_ml, "gold": gold}
 
 class Result(BaseModel):
     gold_match: bool
