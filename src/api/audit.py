@@ -28,6 +28,26 @@ def get_inventory():
     
     return {"number_of_potions": potion, "ml_in_barrels": total_ml, "gold": gold}
 
+@router.get("/detailed_inventory")
+def get_detailed_inventory():
+    return_list = []
+    sql_to_execute = """SELECT type, COALESCE(SUM(change), 0) AS total FROM ledger GROUP BY type"""
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        for row in result:
+            return_list.append({
+                "type": row.type,
+                "quant": row.total
+            })
+    sql_to_execute = """SELECT potion_type, COALESCE(SUM(change), 0) AS total FROM ledger GROUP BY potion_type"""
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
+        for row in result:
+            return_list.append({
+                "type": row.potion_type,
+                "quant": row.total
+            })
+    return return_list
 class Result(BaseModel):
     gold_match: bool
     barrels_match: bool

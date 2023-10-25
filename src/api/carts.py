@@ -3,10 +3,6 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
-
-red_potion_price = 50
-green_potion_price = 50
-blue_potion_price = 50
 from enum import Enum
 
 router = APIRouter(

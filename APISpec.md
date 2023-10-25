@@ -82,7 +82,7 @@ Handles the checkout process for a specific cart.
 
 ```json
 {
-    "total_potions_bought": "integer"
+    "total_potions_bought": "integer",
     "total_gold_paid": "integer"
 }
 ```
