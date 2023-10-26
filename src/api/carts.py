@@ -13,39 +13,14 @@ router = APIRouter(
 
 class search_sort_options(str, Enum):
     customer_name = "customer_name"
-    item_sku = "potion_type"
+    item_sku = "item_sku"
     line_item_total = "line_item_total"
-    timestamp = "time"
+    timestamp = "timestamp"
 
 class search_sort_order(str, Enum):
-    asc = "ASC"
-    desc = "DESC"   
+    asc = "asc"
+    desc = "desc"   
 
-
-"""
-Search for cart line items by customer name and/or potion sku.
-
-Customer name and potion sku filter to orders that contain the 
-string (case insensitive). If the filters aren't provided, no
-filtering occurs on the respective search term.
-
-Search page is a cursor for pagination. The response to this
-search endpoint will return previous or next if there is a
-previous or next page of results available. The token passed
-in that search response can be passed in the next search request
-as search page to get that page of results.
-
-Sort col is which column to sort by and sort order is the direction
-of the search. They default to searching by timestamp of the order
-in descending order.
-
-The response itself contains a previous and next page token (if
-such pages exist) and the results as an array of line items. Each
-line item contains the line item id (must be unique), item sku, 
-customer name, line item total (in gold), and timestamp of the order.
-Your results must be paginated, the max results you can return at any
-time is 5 total line items.
-"""
 @router.get("/search/", tags=["search"])
 def search_orders(
     customer_name: str = "",
@@ -54,11 +29,14 @@ def search_orders(
     sort_col: search_sort_options = search_sort_options.timestamp,
     sort_order: search_sort_order = search_sort_order.desc,
 ):
-    print(sort_col.value)
-    print(sort_order.value)
+    
+    if sort_order.value == "desc":
+        order = "DESC"
+    else:
+        order = "ASC"
     sql_to_execute = f"""
-    SELECT customer.customer_name, orders.order_no, orders.time,
-    orders.potion_type, orders.quantity, orders.quantity * potions.price AS line_item_total
+    SELECT customer.customer_name, orders.order_no, orders.time AS timestamp,
+    orders.potion_type AS item_sku, orders.quantity, orders.quantity * potions.price AS line_item_total
 
 
     FROM orders
@@ -71,7 +49,7 @@ def search_orders(
     (:customer_name = '' AND orders.potion_type ILIKE :potion_sku) OR
     (:potion_sku = '' AND customer_name ILIKE :customer_name)
   
-    ORDER BY {sort_col.value} {sort_order.value}, orders.order_no ASC
+    ORDER BY {sort_col.value} {order}, orders.order_no ASC
     LIMIT 6 OFFSET :cur_page
     """
 
@@ -83,19 +61,17 @@ def search_orders(
     with db.engine.begin() as connection: 
         result = connection.execute(sqlalchemy.text(sql_to_execute), 
                 [{"cur_page": search_page, "customer_name": f'%{customer_name}%', "potion_sku": f'%{potion_sku}%'}])
-        print("hello")
         index = 0
         for row in result:
             return_list.append({
                 "line_item_id": int(search_page) + index,
-                "item_sku": str(row.quantity) + " " + row.potion_type,
+                "item_sku": str(row.quantity) + " " + row.item_sku,
                 "customer_name": row.customer_name,
                 "line_item_total": row.line_item_total,
-                "timestamp": row.time
+                "timestamp": row.timestamp,
             })
             index += 1
             if index >= 5:
-                print("true")
                 next_page = True
                 break
         
