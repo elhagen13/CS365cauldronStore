@@ -34,6 +34,7 @@ def search_orders(
         order = "DESC"
     else:
         order = "ASC"
+
     sql_to_execute = f"""
     SELECT customer.customer_name, orders.order_no, orders.time AS timestamp,
     orders.potion_type AS item_sku, orders.quantity, orders.quantity * potions.price AS line_item_total
@@ -63,9 +64,12 @@ def search_orders(
                 [{"cur_page": search_page, "customer_name": f'%{customer_name}%', "potion_sku": f'%{potion_sku}%'}])
         index = 0
         for row in result:
+            plural = ""
+            if row.quantity > 1:
+                plural = "s"
             return_list.append({
                 "line_item_id": int(search_page) + index,
-                "item_sku": str(row.quantity) + " " + row.item_sku,
+                "item_sku": str(row.quantity) + " " + row.item_sku.replace("_", " ") + plural,
                 "customer_name": row.customer_name,
                 "line_item_total": row.line_item_total,
                 "timestamp": row.timestamp,
@@ -79,6 +83,7 @@ def search_orders(
         next = str(int(search_page) + index)
     else:
         next = ""
+
     if search_page != "0":
         previous = str(int(search_page) - 5)
     else:
