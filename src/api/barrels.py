@@ -89,11 +89,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(priority_list)
 
     for color in priority_list:
+        print("color", color)
         sku = get_size(gold, priority_list[color], color, catalog)
+        print("sku", sku)
         if sku != None:
             quantity = get_quant(gold, priority_list[color], sku, catalog)
             if(quantity != 0): 
                 gold -= (catalog[sku].price * quantity)
+                print(gold)
                 return_list.append({
                     "sku": sku,
                     "quantity": quantity
@@ -116,7 +119,7 @@ def get_size(gold: int,  ml: int, type_potion: str, catalog: dict):
     elif type_potion == "green":
         if "LARGE_GREEN_BARREL" in catalog and gold >= catalog["LARGE_GREEN_BARREL"].price:
             return "LARGE_GREEN_BARREL"
-        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= catalog["SMALL_GREEN_BARREL"].price:
+        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= catalog["MEDIUM_GREEN_BARREL"].price:
             return "MEDIUM_GREEN_BARREL"
         elif "SMALL_GREEN_BARREL" in catalog and gold >= catalog["SMALL_GREEN_BARREL"].price:
             return "SMALL_GREEN_BARREL"
