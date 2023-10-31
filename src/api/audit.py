@@ -15,6 +15,7 @@ router = APIRouter(
 def get_inventory():
     get_quant = """SELECT type, COALESCE(SUM(change),0) AS total FROM ledger GROUP BY type"""
     total_ml = 0
+    potion = 0
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text(get_quant))
         for row in result:
