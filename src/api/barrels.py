@@ -113,28 +113,28 @@ def get_size(gold: int,  ml: int, type_potion: str, catalog: dict):
         if "LARGE_RED_BARREL" in catalog and gold >= catalog["LARGE_RED_BARREL"].price:
             return "LARGE_RED_BARREL"
         elif "MEDIUM_RED_BARREL" in catalog and gold >= catalog["MEDIUM_RED_BARREL"].price \
-            and ml < 15000:
+            and ml < 12000:
             return "MEDIUM_RED_BARREL"
         elif "SMALL_RED_BARREL" in catalog and gold >= catalog["SMALL_RED_BARREL"].price \
-            and ml < 10000:
+            and ml < 7500:
             return "SMALL_RED_BARREL"
     elif type_potion == "green":
         if "LARGE_GREEN_BARREL" in catalog and gold >= catalog["LARGE_GREEN_BARREL"].price:
             return "LARGE_GREEN_BARREL"
         elif "MEDIUM_GREEN_BARREL" in catalog and gold >= catalog["MEDIUM_GREEN_BARREL"].price \
-            and ml < 15000:
+            and ml < 12000:
             return "MEDIUM_GREEN_BARREL"
         elif "SMALL_GREEN_BARREL" in catalog and gold >= catalog["SMALL_GREEN_BARREL"].price \
-            and ml < 10000:
+            and ml < 7500:
             return "SMALL_GREEN_BARREL"
     elif type_potion == "blue":
         if "LARGE_BLUE_BARREL" in catalog and gold >= catalog["LARGE_BLUE_BARREL"].price:
             return "LARGE_BLUE_BARREL"
         elif "MEDIUM_BLUE_BARREL" in catalog and gold >= catalog["MEDIUM_BLUE_BARREL"].price \
-            and ml < 15000:
+            and ml < 12000:
             return "MEDIUM_BLUE_BARREL"
         elif "SMALL_BLUE_BARREL" in catalog and gold >= catalog["SMALL_BLUE_BARREL"].price \
-            and ml < 10000:
+            and ml < 7500:
             return "SMALL_BLUE_BARREL"
     elif type_potion == "dark":
         if "LARGE_DARK_BARREL" in catalog and gold >= catalog["LARGE_DARK_BARREL"].price:
@@ -148,7 +148,13 @@ def get_size(gold: int,  ml: int, type_potion: str, catalog: dict):
 def get_quant(gold: int, ml: int, sku: str, catalog: dict):
     if gold < 10000:
         return 1
-    desired_ml = 20000 - ml
+    if sku[:1] == "L":
+        desired_ml = 30000 - ml
+    elif sku[:1] == "M":
+        desired_ml = 12000 - ml
+    elif sku[:1] == "S":
+        desired_ml = 7500 - ml
+
     total = desired_ml // catalog[sku].ml_per_barrel
     return min(total, catalog[sku].quantity)
     
