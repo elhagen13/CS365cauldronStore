@@ -112,23 +112,29 @@ def get_size(gold: int,  ml: int, type_potion: str, catalog: dict):
     if type_potion == "red":
         if "LARGE_RED_BARREL" in catalog and gold >= catalog["LARGE_RED_BARREL"].price:
             return "LARGE_RED_BARREL"
-        elif "MEDIUM_RED_BARREL" in catalog and gold >= catalog["MEDIUM_RED_BARREL"].price:
+        elif "MEDIUM_RED_BARREL" in catalog and gold >= catalog["MEDIUM_RED_BARREL"].price \
+            and ml < 15000:
             return "MEDIUM_RED_BARREL"
-        elif "SMALL_RED_BARREL" in catalog and gold >= catalog["SMALL_RED_BARREL"].price:
+        elif "SMALL_RED_BARREL" in catalog and gold >= catalog["SMALL_RED_BARREL"].price \
+            and ml < 10000:
             return "SMALL_RED_BARREL"
     elif type_potion == "green":
         if "LARGE_GREEN_BARREL" in catalog and gold >= catalog["LARGE_GREEN_BARREL"].price:
             return "LARGE_GREEN_BARREL"
-        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= catalog["MEDIUM_GREEN_BARREL"].price:
+        elif "MEDIUM_GREEN_BARREL" in catalog and gold >= catalog["MEDIUM_GREEN_BARREL"].price \
+            and ml < 15000:
             return "MEDIUM_GREEN_BARREL"
-        elif "SMALL_GREEN_BARREL" in catalog and gold >= catalog["SMALL_GREEN_BARREL"].price:
+        elif "SMALL_GREEN_BARREL" in catalog and gold >= catalog["SMALL_GREEN_BARREL"].price \
+            and ml < 10000:
             return "SMALL_GREEN_BARREL"
     elif type_potion == "blue":
         if "LARGE_BLUE_BARREL" in catalog and gold >= catalog["LARGE_BLUE_BARREL"].price:
             return "LARGE_BLUE_BARREL"
-        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= catalog["MEDIUM_BLUE_BARREL"].price:
+        elif "MEDIUM_BLUE_BARREL" in catalog and gold >= catalog["MEDIUM_BLUE_BARREL"].price \
+            and ml < 15000:
             return "MEDIUM_BLUE_BARREL"
-        elif "SMALL_BLUE_BARREL" in catalog and gold >= catalog["SMALL_BLUE_BARREL"].price:
+        elif "SMALL_BLUE_BARREL" in catalog and gold >= catalog["SMALL_BLUE_BARREL"].price \
+            and ml < 10000:
             return "SMALL_BLUE_BARREL"
     elif type_potion == "dark":
         if "LARGE_DARK_BARREL" in catalog and gold >= catalog["LARGE_DARK_BARREL"].price:
