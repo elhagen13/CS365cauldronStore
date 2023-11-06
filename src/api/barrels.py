@@ -151,11 +151,12 @@ def get_quant(gold: int, ml: int, sku: str, catalog: dict):
     if sku[:1] == "L":
         desired_ml = 30000 - ml
     elif sku[:1] == "M":
-        desired_ml = 1000 - ml
+        desired_ml = 10000 - ml
     elif sku[:1] == "S":
         desired_ml = 5000 - ml
 
     total = desired_ml // catalog[sku].ml_per_barrel
+    print(total)
     return min(total, catalog[sku].quantity)
     
 
