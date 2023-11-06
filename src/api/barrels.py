@@ -149,7 +149,7 @@ def get_quant(gold: int, ml: int, sku: str, catalog: dict):
     if gold < 10000:
         return 1
     if sku[:1] == "L":
-        desired_ml = 30000 - ml
+        desired_ml = 60000 - ml
     elif sku[:1] == "M":
         desired_ml = 10000 - ml
     elif sku[:1] == "S":
