@@ -149,15 +149,16 @@ def get_quant(gold: int, ml: int, sku: str, catalog: dict):
     if gold < 10000:
         return 1
     if sku[:1] == "L":
-        desired_ml = 60000 - ml
+        desired_ml = 100000 - ml
     elif sku[:1] == "M":
         desired_ml = 10000 - ml
     elif sku[:1] == "S":
         desired_ml = 5000 - ml
 
     total = desired_ml // catalog[sku].ml_per_barrel
+    can_afford = gold // catalog[sku].price
     print(total)
-    return min(total, catalog[sku].quantity)
+    return min(can_afford, total, catalog[sku].quantity)
     
 
 #decides the priority of the potions, which one should be bought first
